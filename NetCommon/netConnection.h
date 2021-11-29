@@ -18,10 +18,10 @@ namespace Vel
                 Client
             };
 
-            Connection( Owner parent, asio::io_context& context, asio::ip::tcp::socket conSocket, ThreadSafeQueue<OwnedMessage<T>>& inQ )
-                : inMessages( inQ ), asioContext( context), socket( std::move( conSocket ) )
+            Connection( Owner owner, asio::io_context& context, asio::ip::tcp::socket socket, ThreadSafeQueue<OwnedMessage<T>>& inQ )
+                : inMessages( inQ ), asioContext( context), socket( std::move( socket ) )
             {
-                ownerType = parent;
+                ownerType = owner;
             }
 
             virtual ~Connection()
@@ -108,6 +108,7 @@ namespace Vel
                 asio::async_read( socket, asio::buffer( &(incomingMessageBuffer.header), sizeof( MessageHeader<T> ) ),
                     [this]( std::error_code error, std::size_t length )
                     {
+                        std::cout << "ReadHeader handler" << std::endl;
                         if( !error )
                         {
                             if( incomingMessageBuffer.header.size > 0 )
@@ -133,6 +134,7 @@ namespace Vel
                 asio::async_read( socket, asio::buffer( incomingMessageBuffer.body.data(), incomingMessageBuffer.body.size() ), //dynamic_vector_buffer?
                     [this]( std::error_code error, std::size_t length )
                     {
+                        std::cout << "ReadBody handler" << std::endl;
                         if( !error )
                         {
                             AddToIncomingMessages();
@@ -150,6 +152,7 @@ namespace Vel
                 asio::async_write( socket, asio::buffer( &(outMessages.front().header), sizeof( MessageHeader<T>) ),
                     [this]( std::error_code error, std::size_t length )
                     {
+                        std::cout << "WriteHeader handler" << std::endl;
                         if( !error )
                         {
                             if( outMessages.front().body.size() > 0 )
@@ -179,6 +182,7 @@ namespace Vel
                 asio::async_write( socket, asio::buffer( outMessages.front().body.data(), outMessages.front().body.size() ),
                     [this]( std::error_code ec, std::size_t length )
                     {
+                        std::cout << "WriteBody handler" << std::endl;
                         if( !ec )
                         {
                             outMessages.pop_front();

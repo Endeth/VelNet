@@ -53,9 +53,9 @@ namespace Vel
             void WaitForClientConnection()
             {
                 acceptor.async_accept(
-                    [this]( std::error_code ec, asio::ip::tcp::socket socket )
+                    [this]( std::error_code error, asio::ip::tcp::socket socket )
                     {
-                        if( !ec )
+                        if( !error )
                         {
                             std::cout << "[SERVER] New connection: " << socket.remote_endpoint() << "\n";
 
@@ -66,7 +66,7 @@ namespace Vel
                                 activeConnections.push_back( std::move( newConnection ) );
                                 activeConnections.back()->ConnectToClient( connectionID++ );
 
-                                std::cout << "[" << activeConnections.back()->GetID() << "] connection approved\n";
+                                std::cout << "[" << activeConnections.back()->GetID() << "] Connection approved\n";
                             }
                             else
                             {
@@ -75,10 +75,9 @@ namespace Vel
                         }
                         else
                         {
-                            std::cout << "[SERVER] New connection error: " << ec.message() << "\n";
+                            std::cout << "[SERVER] New connection error: " << error.message() << "\n";
                         }
 
-                        // Wait for another connnection
                         WaitForClientConnection();
                     }
                 );
@@ -123,7 +122,6 @@ namespace Vel
 
             }
 
-            // Resolves certain amount of messages waiting in queue
             void Update( size_t maxMessages = std::numeric_limits<size_t>::max() )
             {
                 size_t msgCount = 0;
@@ -138,7 +136,7 @@ namespace Vel
             }
 
         protected:
-            // Called on client connect - can cancel connection by returning false
+            // Can cancel connection by returning false
             virtual bool OnClientConnect( std::shared_ptr<Connection<T>> client )
             {
                 return false;
@@ -156,7 +154,6 @@ namespace Vel
 
             ThreadSafeQueue<OwnedMessage<T>> inMessages;
 
-            // Active connections
             std::deque<std::shared_ptr<Connection<T>>> activeConnections;
 
             asio::io_context asioContext;

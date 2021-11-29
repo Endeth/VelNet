@@ -245,6 +245,52 @@ private:
     std::optional<asio::ip::tcp::socket> socket;
 };
 
+
+
+class HTTPTest
+{
+public:
+    HTTPTest( asio::io_context& context, const std::string& hostname ) : tcpResolver( context ), socket( context )
+    {
+        request = "GET / HTTP/1.1\n"
+            "Host: " + hostname + "\n"
+            "Connection: close\n\n";
+
+        tcpResolver.async_resolve( hostname, "http", std::bind( &HTTPTest::OnResolve, this, std::placeholders::_1, std::placeholders::_2 ) );
+
+    }
+
+private:
+    void OnResolve( std::error_code error, asio::ip::tcp::resolver::results_type results )
+    {
+        std::cout << "Resolve: " << error.message() << std::endl;
+        asio::async_connect( socket, results, std::bind( &HTTPTest::OnConnect, this, std::placeholders::_1, std::placeholders::_2 ) );
+    }
+
+    void OnConnect( std::error_code error, const asio::ip::tcp::endpoint& endpoint )
+    {
+        std::cout << "Connect: " << error.message() << std::endl;
+        asio::async_write( socket, asio::buffer( request ), std::bind( &HTTPTest::OnWrite, this, std::placeholders::_1, std::placeholders::_2 ) );
+    }
+
+    void OnWrite( std::error_code error, size_t bytesTransferred )
+    {
+        std::cout << "Write: " << error.message() << " Bytes transferred: " << bytesTransferred << std::endl;
+        asio::async_read( socket, responseBuffer, std::bind( &HTTPTest::OnRead, this, std::placeholders::_1, std::placeholders::_2 ) );
+    }
+
+    void OnRead( std::error_code error, size_t bytesTransferred )
+    {
+        std::cout << "Read: " << error.message() << ", bytes transferred: " << bytesTransferred << "\n\n" << std::istream( &responseBuffer ).rdbuf() << std::endl;
+
+    }
+
+    asio::ip::tcp::resolver tcpResolver;
+    asio::ip::tcp::socket socket;
+    asio::streambuf responseBuffer;
+    std::string request;
+};
+
 int main()
 {
     asio::io_context context;

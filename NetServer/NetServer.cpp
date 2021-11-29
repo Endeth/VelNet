@@ -1,39 +1,34 @@
 #include "VelNet.h"
 #include "netCommon.h"
 
-enum class CustomMsgTypes : uint32_t //TODO move to common place for client also
+enum class PingProtocol : uint32_t //TODO move to common place for client also
 {
-    ServerAccept,
-    ServerDeny,
-    ServerPing,
-    MessageAll,
-    ServerMessage
+    Ping
 };
 
-class CustomServer : public Vel::Net::ServerInterface<CustomMsgTypes>
+class PingServer : public Vel::Net::ServerInterface<PingProtocol>
 {
 public:
-    CustomServer( uint16_t port ) 
-        : Vel::Net::ServerInterface<CustomMsgTypes>( port )
+    PingServer( uint16_t port ) : Vel::Net::ServerInterface<PingProtocol>( port )
     {
 
     }
 
 protected:
-    virtual bool OnClientConnect( std::shared_ptr<Vel::Net::Connection<CustomMsgTypes>> client ) override
+    virtual bool OnClientConnect( std::shared_ptr<Vel::Net::Connection<PingProtocol>> client ) override
     {
         return true;
     }
 
-    virtual void OnClientDisconnect( std::shared_ptr<Vel::Net::Connection<CustomMsgTypes>> client ) override
+    virtual void OnClientDisconnect( std::shared_ptr<Vel::Net::Connection<PingProtocol>> client ) override
     {
 
     }
-    virtual void OnMessage( std::shared_ptr<Vel::Net::Connection<CustomMsgTypes>> client, Vel::Net::Message<CustomMsgTypes>& msg ) override
+    virtual void OnMessage( std::shared_ptr<Vel::Net::Connection<PingProtocol>> client, Vel::Net::Message<PingProtocol>& msg ) override
     {
         switch( msg.header.id )
         {
-            case CustomMsgTypes::ServerPing:
+            case PingProtocol::Ping:
             {
                 std::cout << "[" << client->GetID() << "]: Server Ping\n";
 
@@ -46,7 +41,7 @@ protected:
 
 int main()
 {
-    CustomServer server(13666);
+    PingServer server(13666);
     server.Start();
 
     while( true )
